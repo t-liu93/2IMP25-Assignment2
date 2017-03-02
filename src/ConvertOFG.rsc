@@ -11,11 +11,31 @@ import lang::java::flow::JavaToObjectFlow;
 import analysis::flow::ObjectFlow;
 import lang::ofg::ast::Java2OFG;
 import Relation;
+import vis::Figure;
+import vis::Render;
+
+
+//Declare variables
+private M3 projectM3;
+private Program projectProgram;
 
 //Create M3 and a flow program
-M3 m = createM3FromEclipseProject(|project://eLib|);
-Program p = createOFG(|project://eLib|);
+//Slides getting facts
+public void createM3AndFlowProgram(loc projectLoc) {
+    projectM3 = createM3FromEclipseProject(projectLoc);
+    projectProgram = createOFG(projectLoc);
+}
+
+//Get private variables
+public M3 getM3() {
+    return projectM3;
+}
+public Program getProgram() {
+    return projectProgram;
+}
 
 //Initial flow graph 
 //According to slides "TipsAndTricks"
 alias OFG = rel[loc from, loc to]; //OFG alias
+
+
