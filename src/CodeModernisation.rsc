@@ -22,8 +22,10 @@ private OFG ofg;
 
 //A main entry to invoke all procedure
 //It invokes all other stuffs
-public void getAdvises(loc projectLoc) {
+public void getAdvises() {
 //TODO: Add sub methods
+	createM3AndFlowProgram(|project://eLib|);
+	buildGraph(getProgram());
 }
 
 //Create M3 and a flow program
@@ -49,6 +51,23 @@ public void buildGraph(Program p) {
     ;
 }
 
+//OFG propagation - usage unkown
+//In Jurgen Vinju's Github repository
+public OFG prop(OFG g, rel[loc,loc] gen, rel[loc,loc] kill, bool back) {
+  OFG IN = { };
+  OFG OUT = gen + (IN - kill);
+  gi = g<to,from>;
+  set[loc] pred(loc n) = gi[n];
+  set[loc] succ(loc n) = g[n];
+  
+  solve (IN, OUT) {
+    IN = { <n,\o> | n <- carrier(g), p <- (back ? pred(n) : succ(n)), \o <- OUT[p] };
+    OUT = gen + (IN - kill);
+  }
+  
+  return OUT;
+}
+
 //Get private variables
 public M3 getM3() {
     return projectM3;
@@ -60,6 +79,17 @@ public OFG getOfg() {
     return ofg;
 }
 
+public void write(OFG ofg) {
+	writeFile(|file:///D:/ofg.txt|, ofg);
+}
+
+//Draw class diagram
+public void drawDiagram(M3 m) {
+  classFigures = [box(text("<cl.path[1..]>"), id("<cl>")) | cl <- classes(m)]; 
+  edges = [edge("<to>", "<from>") | <from,to> <- m@extends ];  
+  
+  render(scrollable(graph(classFigures, edges, hint("layered"), std(gap(10)), std(font("Bitstream Vera Sans")), std(fontSize(20)))));
+}
 
 alias OFG = rel[loc from, loc to]; //OFG alias
 
