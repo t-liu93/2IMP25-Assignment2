@@ -24,7 +24,7 @@ private OFG ofg;
 //It invokes all other stuffs
 public void getAdvises() {
 //TODO: Add sub methods
-	createM3AndFlowProgram(|project://eLib|);
+	createM3AndFlowProgram(|project://eLib|); //TODO: make it more generic
 	buildGraph(getProgram());
 }
 
@@ -79,8 +79,10 @@ public OFG getOfg() {
     return ofg;
 }
 
-public void write(OFG ofg) {
-	writeFile(|file:///D:/ofg.txt|, ofg);
+public void write() {
+	writeFile(|file:///D:/ofg.txt|, getOfg());
+	writeFile(|file:///D:/m3.txt|, getM3());
+	writeFile(|file:///D:/program.txt|, getProgram());
 }
 
 //Draw class diagram
