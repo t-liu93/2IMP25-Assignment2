@@ -19,6 +19,19 @@ import vis::Render;
 private M3 projectM3;
 private Program projectProgram;
 private OFG ofg;
+alias OFG = rel[loc from, loc to]; //OFG alias
+//Since classes(m) cannot get basic classes
+//Add a set to store all Java's basic classes
+set[loc] basicClasses = {
+    |java+class:///java/lang/Byte|, 
+    |java+class:///java/lang/Character|, 
+    |java+class:///java/lang/Short|, 
+    |java+class:///java/lang/Integer|, 
+    |java+class:///java/lang/Long|, 
+    |java+class:///java/lang/Float|, 
+    |java+class:///java/lang/Double|, 
+    |java+class:///java/lang/String|
+};
 
 //A main entry to invoke all procedure
 //It invokes all other stuffs
@@ -26,6 +39,11 @@ public void getAdvises() {
 //TODO: Add sub methods
 	createM3AndFlowProgram(|project://eLib|); //TODO: make it more generic
 	buildGraph(getProgram());
+	//println(declarations(getM3()));
+	//for(cl <- classes(getM3())) {
+	//set[loc] innerClassSet = { e | e <- m@containment[cl], isClass(e)};
+	//println(innerClassSet);
+	//}
 }
 
 //Create M3 and a flow program
@@ -33,6 +51,7 @@ public void getAdvises() {
 public void createM3AndFlowProgram(loc projectLoc) {
     projectM3 = createM3FromEclipseProject(projectLoc);
     projectProgram = createOFG(projectLoc);
+    buildGraph(getProgram());
 }
 
 //Initial flow graph 
@@ -68,6 +87,15 @@ public OFG prop(OFG g, rel[loc,loc] gen, rel[loc,loc] kill, bool back) {
   return OUT;
 }
 
+//Get all classes from M3
+public set[loc] getClasses(M3 m) {
+    set[loc] allClasses = classes(m);
+    for (cl <- basicClasses) {
+        allClasses += cl;
+    }
+    return allClasses;
+}
+
 //Get private variables
 public M3 getM3() {
     return projectM3;
@@ -85,15 +113,33 @@ public void write() {
 	writeFile(|file:///D:/program.txt|, getProgram());
 }
 
-//Draw class diagram
-public void drawDiagram(M3 m) {
+//Draw extends class diagram
+public void drawExtendsClassDiagram(M3 m) {
   classFigures = [box(text("<cl.path[1..]>"), id("<cl>")) | cl <- classes(m)]; 
   edges = [edge("<to>", "<from>") | <from,to> <- m@extends ];  
   
-  render(scrollable(graph(classFigures, edges, hint("layered"), std(gap(10)), std(font("Bitstream Vera Sans")), std(fontSize(20)))));
+  render("Extends Class Diagram", 
+        scrollable(graph(classFigures, edges, hint("layered"), std(gap(10)), std(font("Bitstream Vera Sans")), std(fontSize(20)))));
 }
 
-alias OFG = rel[loc from, loc to]; //OFG alias
+//Draw type dependency diagram
+public void drawTypeDependencyDiagram(M3 m) {
+    figures = [box(text("<cl.path[1..]>"), id("<cl>")) | cl <- getClasses(m) ];
+    edges = [edge("<to>", "<from>") | <from, to> <- m@typeDependency ];
+    render("Type Dependency Diagram", 
+            scrollable(graph(figures, edges, hint("layered"), std(gap(10)), std(font("Bitstream Vera Sans")), std(fontSize(20)))));
+}
+//in order to store M3 or Ofg as a string for parsing
+public str M3ToString(M3 m) {
+    writeFile(|tmp:///m3.txt|, m);
+    return readFile(|tmp:///m3.txt|);
+}
+public str OfgToString(OFG ofg) {
+    writeFile(|tmp:///ofg.txt|, ofg);
+    return readFile(|tmp:///ofg.txt|);
+}
+
+
 
 
     

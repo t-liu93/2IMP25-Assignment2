@@ -1,4 +1,7 @@
-m3(|project://eLib|)[@annotations={},@typeDependency={
+m3(|project://eLib|)[
+@annotations={},
+
+@typeDependency={
 <|java+parameter:///Main/printUser(java.lang.String)/scope(cmd)/scope(0)/cmd|,|java+class:///java/lang/String|>,
 <|java+method:///Library/removeDocument(int)|,|java+class:///Library|>,
 <|java+method:///Document/addLoan(Loan)|,|java+primitiveType:///void|>,
@@ -609,7 +612,9 @@ m3(|project://eLib|)[@annotations={},@typeDependency={
 <|java+method:///Main/isHolding(java.lang.String)|,|java+class:///User|>,
 <|java+field:///Library/loans|,|java+interface:///java/util/Collection|>,
 <|java+method:///Library/searchDocumentByAuthors(java.lang.String)|,|java+interface:///java/util/Collection|>,
-<|java+method:///Main/searchUser(java.lang.String)|,|java+class:///Main|>},@methodOverrides={<|java+method:///TechnicalReport/printInfo()|,|java+method:///Document/printInfo()|>,
+<|java+method:///Main/searchUser(java.lang.String)|,|java+class:///Main|>},
+
+@methodOverrides={<|java+method:///TechnicalReport/printInfo()|,|java+method:///Document/printInfo()|>,
 <|java+method:///TechnicalReport/authorizedLoan(User)|,|java+method:///Document/authorizedLoan(User)|>,
 <|java+method:///User/equals(java.lang.Object)|,|java+method:///java/lang/Object/equals(java.lang.Object)|>,
 <|java+method:///Journal/authorizedLoan(User)|,|java+method:///Document/authorizedLoan(User)|>,
@@ -617,7 +622,9 @@ m3(|project://eLib|)[@annotations={},@typeDependency={
 <|java+constructor:///Journal/Journal(java.lang.String)|,|java+constructor:///Document/Document(java.lang.String)|>,
 <|java+method:///InternalUser/authorizedUser()|,|java+method:///User/authorizedUser()|>,
 <|java+method:///Document/equals(java.lang.Object)|,|java+method:///java/lang/Object/equals(java.lang.Object)|>,
-<|java+method:///Book/printInfo()|,|java+method:///Document/printInfo()|>},@names={<"cmd",|java+parameter:///Main/isHolding(java.lang.String)/scope(cmd)/scope(0)/cmd|>,
+<|java+method:///Book/printInfo()|,|java+method:///Document/printInfo()|>},
+
+@names={<"cmd",|java+parameter:///Main/isHolding(java.lang.String)/scope(cmd)/scope(0)/cmd|>,
 <"equals",|java+method:///java/lang/String/equals(java.lang.Object)|>,
 <"main",|java+method:///Main/main(java.lang.String%5B%5D)|>,
 <"user",|java+variable:///Library/returnDocument(Document)/scope(0)/user|>,
@@ -901,7 +908,11 @@ m3(|project://eLib|)[@annotations={},@typeDependency={
 <"printRefNo",|java+method:///TechnicalReport/printRefNo()|>,
 <"iterator",|java+method:///java/util/Collection/iterator()|>,
 <"id",|java+parameter:///InternalUser/InternalUser(java.lang.String,java.lang.String,java.lang.String,java.lang.String)/scope(id)/scope(0)/id|>,
-<"args",|java+variable:///Main/addJournal(java.lang.String)/args|>},@implements={},@methodInvocation={<|java+method:///Main/dispatchCommand(java.lang.String)|,|java+method:///Main/returnDoc(java.lang.String)|>,
+<"args",|java+variable:///Main/addJournal(java.lang.String)/args|>},
+
+@implements={},
+
+@methodInvocation={<|java+method:///Main/dispatchCommand(java.lang.String)|,|java+method:///Main/returnDoc(java.lang.String)|>,
 <|java+method:///User/printInfo()|,|java+method:///java/util/Collection/iterator()|>,
 <|java+method:///Main/searchUser(java.lang.String)|,|java+method:///Main/getArgs(java.lang.String)|>,
 <|java+method:///Main/addReport(java.lang.String)|,|java+method:///java/io/PrintStream/println(java.lang.String)|>,
@@ -1157,7 +1168,9 @@ m3(|project://eLib|)[@annotations={},@typeDependency={
 <|java+method:///Main/addUser(java.lang.String)|,|java+method:///java/io/PrintStream/println(java.lang.String)|>,
 <|java+method:///Main/main(java.lang.String%5B%5D)|,|java+constructor:///java/io/InputStreamReader/InputStreamReader(java.io.InputStream)|>,
 <|java+method:///Library/addDocument(Document)|,|java+method:///java/util/Map/containsValue(java.lang.Object)|>,
-<|java+method:///Library/removeUser(int)|,|java+constructor:///java/lang/Integer/Integer(int)|>},@containment={<|java+method:///Main/addBook(java.lang.String)|,|java+parameter:///Main/addBook(java.lang.String)/scope(cmd)/scope(0)/cmd|>,
+<|java+method:///Library/removeUser(int)|,|java+constructor:///java/lang/Integer/Integer(int)|>},
+
+@containment={<|java+method:///Main/addBook(java.lang.String)|,|java+parameter:///Main/addBook(java.lang.String)/scope(cmd)/scope(0)/cmd|>,
 <|java+method:///Main/printDoc(java.lang.String)|,|java+variable:///Main/printDoc(java.lang.String)/args|>,
 <|java+class:///Document|,|java+method:///Document/printInfo()|>,
 <|java+method:///Library/addLoan(Loan)|,|java+variable:///Library/addLoan(Loan)/user|>,
@@ -1398,7 +1411,11 @@ m3(|project://eLib|)[@annotations={},@typeDependency={
 <|java+class:///Library|,|java+method:///Library/addUser(User)|>,
 <|java+compilationUnit:///E:/Documents/EclipseProject/2IMP25-Assignment2/eLib/InternalUser.java|,|java+class:///InternalUser|>,
 <|java+class:///Document|,|java+field:///Document/ISBNCode|>,
-<|java+class:///Document|,|java+constructor:///Document/Document(java.lang.String)|>},@documentation={},@modifiers={<|java+method:///Library/getUser(int)|,public()>,
+<|java+class:///Document|,|java+constructor:///Document/Document(java.lang.String)|>},
+
+@documentation={},
+
+@modifiers={<|java+method:///Library/getUser(int)|,public()>,
 <|java+method:///Main/searchUser(java.lang.String)|,public()>,
 <|java+constructor:///Journal/Journal(java.lang.String)|,public()>,
 <|java+method:///Main/addReport(java.lang.String)|,public()>,
@@ -1499,7 +1516,9 @@ m3(|project://eLib|)[@annotations={},@typeDependency={
 <|java+method:///TechnicalReport/printRefNo()|,protected()>,
 <|java+method:///Main/printUser(java.lang.String)|,public()>,
 <|java+method:///User/addLoan(Loan)|,public()>,
-<|java+method:///Main/addintUser(java.lang.String)|,static()>},@fieldAccess={<|java+method:///Main/searchDoc(java.lang.String)|,|java+field:///Main/lib|>,
+<|java+method:///Main/addintUser(java.lang.String)|,static()>},
+
+@fieldAccess={<|java+method:///Main/searchDoc(java.lang.String)|,|java+field:///Main/lib|>,
 <|java+method:///Document/getBorrower()|,|java+field:///Document/loan|>,
 <|java+method:///Document/printAvailability()|,|java+field:///java/lang/System/out|>,
 <|java+method:///Main/printHeader()|,|java+field:///java/lang/System/out|>,
@@ -1608,7 +1627,9 @@ m3(|project://eLib|)[@annotations={},@typeDependency={
 <|java+method:///User/getAddress()|,|java+field:///User/address|>,
 <|java+method:///Document/printAvailability()|,|java+field:///Document/loan|>,
 <|java+method:///Main/rmDoc(java.lang.String)|,|java+field:///Main/rmDoc(java.lang.String)/args/length|>,
-<|java+constructor:///User/User(java.lang.String,java.lang.String,java.lang.String)|,|java+field:///User/nextUserCodeAvailable|>},@messages=[warning("Collection is a raw type. References to generic type Collection\<E\> should be parameterized",|file:///E:/Documents/EclipseProject/2IMP25-Assignment2/eLib/User.java|(116,10,<8,0>,
+<|java+constructor:///User/User(java.lang.String,java.lang.String,java.lang.String)|,|java+field:///User/nextUserCodeAvailable|>},
+
+@messages=[warning("Collection is a raw type. References to generic type Collection\<E\> should be parameterized",|file:///E:/Documents/EclipseProject/2IMP25-Assignment2/eLib/User.java|(116,10,<8,0>,
 <8,0>)),warning("LinkedList is a raw type. References to generic type LinkedList\<E\> should be parameterized",|file:///E:/Documents/EclipseProject/2IMP25-Assignment2/eLib/User.java|(139,10,<8,0>,
 <8,0>)),warning("Type safety: The method add(Object) belongs to the raw type Collection. References to generic type Collection\<E\> should be parameterized",|file:///E:/Documents/EclipseProject/2IMP25-Assignment2/eLib/User.java|(794,15,<44,0>,
 <44,0>)),warning("Iterator is a raw type. References to generic type Iterator\<E\> should be parameterized",|file:///E:/Documents/EclipseProject/2IMP25-Assignment2/eLib/User.java|(1192,8,<60,0>,
@@ -1644,7 +1665,9 @@ m3(|project://eLib|)[@annotations={},@typeDependency={
 <121,0>)),warning("Iterator is a raw type. References to generic type Iterator\<E\> should be parameterized",|file:///E:/Documents/EclipseProject/2IMP25-Assignment2/eLib/Library.java|(3235,8,<127,0>,
 <127,0>)),warning("Iterator is a raw type. References to generic type Iterator\<E\> should be parameterized",|file:///E:/Documents/EclipseProject/2IMP25-Assignment2/eLib/Library.java|(3457,8,<137,0>,
 <137,0>)),warning("The import java.util is never used",|file:///E:/Documents/EclipseProject/2IMP25-Assignment2/eLib/Document.java|(8,9,<1,0>,
-<1,0>))],@uses={<|file:///E:/Documents/EclipseProject/2IMP25-Assignment2/eLib/Library.java|(782,3,<31,12>,
+<1,0>))],
+
+@uses={<|file:///E:/Documents/EclipseProject/2IMP25-Assignment2/eLib/Library.java|(782,3,<31,12>,
 <31,15>),|java+method:///java/util/Map/put(K,V)|>,
 <|file:///E:/Documents/EclipseProject/2IMP25-Assignment2/eLib/Library.java|(2565,10,<101,8>,
 <101,18>),|java+variable:///Library/searchUser(java.lang.String)/usersFound|>,
@@ -3615,7 +3638,9 @@ m3(|project://eLib|)[@annotations={},@typeDependency={
 <|file:///E:/Documents/EclipseProject/2IMP25-Assignment2/eLib/Library.java|(2372,10,<94,23>,
 <94,33>),|java+class:///java/util/LinkedList|>,
 <|file:///E:/Documents/EclipseProject/2IMP25-Assignment2/eLib/Library.java|(2838,3,<110,12>,
-<110,15>),|java+method:///java/util/List/add(E)|>},@types={<|java+method:///Document/getAuthors()|,method(|java+method:///Document/getAuthors()|,[],class(|java+class:///java/lang/String|,[]),[])>,
+<110,15>),|java+method:///java/util/List/add(E)|>},
+
+@types={<|java+method:///Document/getAuthors()|,method(|java+method:///Document/getAuthors()|,[],class(|java+class:///java/lang/String|,[]),[])>,
 <|java+field:///Library/MAX_NUMBER_OF_LOANS|,int()>,
 <|java+method:///Library/getDocument(int)|,method(|java+method:///Library/getDocument(int)|,[],class(|java+class:///Document|,[]),[int()])>,
 <|java+parameter:///Library/addLoan(Loan)/scope(loan)/scope(0)/loan|,class(|java+class:///Loan|,[])>,
@@ -3856,10 +3881,14 @@ m3(|project://eLib|)[@annotations={},@typeDependency={
 <|java+parameter:///Main/addBook(java.lang.String)/scope(cmd)/scope(0)/cmd|,class(|java+class:///java/lang/String|,[])>,
 <|java+field:///Document/authors|,class(|java+class:///java/lang/String|,[])>,
 <|java+parameter:///Library/returnDocument(Document)/scope(doc)/scope(0)/doc|,class(|java+class:///Document|,[])>,
-<|java+variable:///Main/searchDoc(java.lang.String)/scope(0)/doc|,class(|java+class:///Document|,[])>},@extends={<|java+class:///InternalUser|,|java+class:///User|>,
+<|java+variable:///Main/searchDoc(java.lang.String)/scope(0)/doc|,class(|java+class:///Document|,[])>},
+
+@extends={<|java+class:///InternalUser|,|java+class:///User|>,
 <|java+class:///Book|,|java+class:///Document|>,
 <|java+class:///TechnicalReport|,|java+class:///Document|>,
-<|java+class:///Journal|,|java+class:///Document|>},@declarations={<|java+method:///Main/rmDoc(java.lang.String)|,|file:///E:/Documents/EclipseProject/2IMP25-Assignment2/eLib/Main.java|(3326,345,<93,4>,
+<|java+class:///Journal|,|java+class:///Document|>},
+
+@declarations={<|java+method:///Main/rmDoc(java.lang.String)|,|file:///E:/Documents/EclipseProject/2IMP25-Assignment2/eLib/Main.java|(3326,345,<93,4>,
 <100,5>)>,
 <|java+variable:///Library/addLoan(Loan)/doc|,|file:///E:/Documents/EclipseProject/2IMP25-Assignment2/eLib/Library.java|(1299,24,<51,10>,
 <51,34>)>,
