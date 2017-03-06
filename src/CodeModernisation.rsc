@@ -13,6 +13,7 @@ import lang::ofg::ast::Java2OFG;
 import Relation;
 import vis::Figure;
 import vis::Render;
+import String;
 
 alias OFG = rel[loc from, loc to]; //OFG alias
 //Declare variables
@@ -20,6 +21,7 @@ private M3 projectM3;
 private Program projectProgram;
 private OFG ofg;
 private list[Edge] ofgEdges;
+private set[str] ofgNodes = {};
 
 //Since classes(m) cannot get basic classes
 //Add a set to store all Java's basic classes
@@ -33,6 +35,19 @@ set[loc] basicClasses = {
     |java+class:///java/lang/Double|, 
     |java+class:///java/lang/String|
 };
+//Container Classes
+//These classes variables should be modified 
+set[str] containerClasses =  {
+     "/java/util/Map"
+    ,"/java/util/HashMap"
+    ,"/java/util/Collection"
+    ,"/java/util/Set"
+    ,"/java/util/HashSet"
+    ,"/java/util/LinkedHashSet"
+    ,"/java/util/List"
+    ,"/java/util/ArrayList"
+    ,"/java/util/LinkedList"
+};
 
 //A main entry to invoke all procedure
 //It invokes all other stuffs
@@ -41,6 +56,7 @@ public void getAdvises() {
 	createM3AndFlowProgram(|project://eLib|); //TODO: make it more generic
 	buildGraph(getProgram()); //BuildOFG
 	ofgEdges = makeOfgEdges();
+	makeOfgNodes();
 	//println(declarations(getM3()));
 	//for(cl <- classes(getM3())) {
 	//set[loc] innerClassSet = { e | e <- m@containment[cl], isClass(e)};
@@ -102,6 +118,13 @@ public set[loc] getClasses(M3 m) {
 private list[Edge] makeOfgEdges() {
     return [edge("<to>", "<from>") | <from,to> <- getOfg() ];
 }
+//Store all ofg nodes
+private void makeOfgNodes() {
+    for (e <- ofgEdges) {
+        ofgNodes += e.from;
+        ofgNodes += e.to;
+    }
+}
 
 
 //Get private variables
@@ -116,6 +139,9 @@ public OFG getOfg() {
 }
 public list[Edge] getOfgEdges() {
     return ofgEdges;
+}
+public list[str] getOfgNodes() {
+    return toList(ofgNodes);
 }
 
 public void write() {
@@ -132,7 +158,6 @@ public void drawExtendsClassDiagram(M3 m) {
   render("Extends Class Diagram", 
         scrollable(graph(classFigures, edges, hint("layered"), std(gap(10)), std(font("Bitstream Vera Sans")), std(fontSize(20)))));
 }
-
 //Draw type dependency diagram
 public void drawTypeDependencyDiagram(M3 m) {
     figures = [box(text("<cl.path[1..]>"), id("<cl>")) | cl <- getClasses(m) ];
@@ -148,6 +173,16 @@ public str M3ToString(M3 m) {
 public str OfgToString(OFG ofg) {
     writeFile(|tmp:///ofg.txt|, ofg);
     return readFile(|tmp:///ofg.txt|);
+}
+
+//Check ofg edges, such that field flows to Classes
+//Indicates that data flows to/from that class
+public void checkOfg(list[Edge] edges) {
+    for (e <- edges) {
+        if (contains(e.from, "java+field") && contains(e.to, "java+method")) {
+            println(e);
+        }
+    }
 }
 
 
