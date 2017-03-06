@@ -21,11 +21,13 @@ private M3 projectM3;
 private Program projectProgram;
 private OFG ofg;
 private OFG propagatedOfg;
-private list[Edge] ofgEdges;
-private list[Edge] propagatedOfgEdges;
+private list[Edge] ofgEdges = [];
+private list[Edge] propagatedOfgEdges = [];
 private set[str] ofgNodes = {};
 private set[str] propagatedOfgNodes = {};
-private list[Edge] interfaceEdges;
+private list[Edge] interfaceEdges = [];
+private list[Edge] typeDependencies = [];
+private list[Edge] edgeToModify = [];
 
 //Since classes(m) cannot get basic classes
 //Add a set to store all Java's basic classes
@@ -42,28 +44,26 @@ set[loc] basicClasses = {
 //Container Classes
 //These classes variables should be modified 
 set[str] containerClasses =  {
-     "/java/util/Map"
-    ,"/java/util/HashMap"
-    ,"/java/util/Collection"
-    ,"/java/util/Set"
-    ,"/java/util/HashSet"
-    ,"/java/util/LinkedHashSet"
-    ,"/java/util/List"
-    ,"/java/util/ArrayList"
-    ,"/java/util/LinkedList"
+     "/java/util/Map", 
+     "/java/util/HashMap", 
+     "/java/util/Collection", 
+     "/java/util/Set", 
+     "/java/util/HashSet", 
+     "/java/util/LinkedHashSet", 
+     "/java/util/List", 
+     "/java/util/ArrayList", 
+     "/java/util/LinkedList"
 };
 
 //A main entry to invoke all procedure
 //It invokes all other stuffs
 public void getAdvises() {
 //TODO: Add sub methods
-	createM3AndFlowProgram(|project://eLib|); //TODO: make it more generic
-	//buildGraph(getProgram()); //BuildOFG
-	propagatedOfg = propagate(getOfg());
-	ofgEdges = makeOfgEdges();
-	propagatedOfgEdges = makePropagatedOfgEdges();
-	makeOfgNodes();
-	makePropagatedOfgNodes();
+    projectLocation = |project://eLib|;
+	createM3AndFlowProgram(projectLocation); //Create OFG
+	getEdgesAndNodes(); //Get all edges and nodes we need
+	checkOfgInflow(getPropagatedOfgEdges());
+	checkEdgeToModify(getEdgeToModify());
 	//println(declarations(getM3()));
 	//for(cl <- classes(getM3())) {
 	//set[loc] innerClassSet = { e | e <- m@containment[cl], isClass(e)};
@@ -73,11 +73,45 @@ public void getAdvises() {
 
 //Create M3 and a flow program
 //Slides getting facts
-public void createM3AndFlowProgram(loc projectLoc) {
+private void createM3AndFlowProgram(loc projectLoc) {
     projectM3 = createM3FromEclipseProject(projectLoc);
     projectProgram = createOFG(projectLoc);
-    buildGraph(getProgram());
-    //initialEdgesOFG(getProgram());
+    ofg = buildGraph(getProgram()); //original OFG
+    propagatedOfg = propagate(getOfg()); //propagatedOFG
+}
+
+//Get edges and nodes
+//From ofg, propagated ofg and M3
+private void getEdgesAndNodes() {
+    ofgEdges = makeOfgEdges();
+    propagatedOfgEdges = makePropagatedOfgEdges();
+    makeOfgNodes();
+    makePropagatedOfgNodes();
+    typeDependencies = makeTypeDependencyEdges(getM3());
+}
+
+//Check ofg edges, such that field flows to Classes
+//Indicates that data flows to/from that class
+private void checkOfgInflow(list[Edge] edges) {
+    for (e <- edges) {
+        if (contains(e.from, "class") && contains(e.to, "field")) {
+            edgeToModify += e;
+        }
+    }
+}
+
+//We only care about the build-in Java containers
+//i.e. uses an interface like Map, Collection, etc. 
+private void checkEdgeToModify(list[Edge] edges) {
+    list[Edge] temp = [];
+    for (e <- edges) {
+        for (t <- getTypeDependencies()) {
+            if (e.to == t.to && contains(t.from, "interface")) {
+                temp += e;
+            }
+        }
+    }
+    edgeToModify = temp;
 }
 
 //Initial flow graph 
@@ -85,9 +119,8 @@ public void createM3AndFlowProgram(loc projectLoc) {
 //Slightly changed from ObjectFlow.rsc
 //In Jurgen Vinju's Github repository
 //Apply theory of Figure 2.2 in Tonella
-public void buildGraph(Program p) {
-    ofg
-    = { <as[i], fps[i]> | newAssign(x, cl, c, as) <- p.statements, constructor(c, fps) <- p.decls, i <- index(as) } 
+private OFG buildGraph(Program p) {
+    return { <as[i], fps[i]> | newAssign(x, cl, c, as) <- p.statements, constructor(c, fps) <- p.decls, i <- index(as) } 
     + { <cl + "this", x> | newAssign(x, cl, _, _) <- p.statements } 
     + { <cs + "this", x> | newAssign(x, _, cs, _) <- p.statements }
     + { <y, x> | assign(x, _, y) <- p.statements} 
@@ -97,21 +130,33 @@ public void buildGraph(Program p) {
     ;
 }
 
-//OFG propagation - usage unkown
-//In Jurgen Vinju's Github repository
-public OFG prop(OFG g, rel[loc,loc] gen, rel[loc,loc] kill, bool back) {
-  OFG IN = { };
-  OFG OUT = gen + (IN - kill);
-  gi = g<to,from>;
-  set[loc] pred(loc n) = gi[n];
-  set[loc] succ(loc n) = g[n];
+//Propagation algorithm
+//Both forward and backward
+private OFG propagate(OFG ofg) {
+    rel[loc, loc] genFor;
+    rel[loc, loc] genBack;
+    genFor = { <constr + "this", class> | newAssign(_, class, constr, _) <- getProgram().statements, constructor(constr, _) <- getProgram().decls };
+    genBack = { <x, caller> | assign(y, caller, x) <- getProgram().statements, caller != emptyId}
+            + { <m + "return", caller> | call(caller, _, _, m, _) <- getProgram().statements, caller != emptyId};
+        
+    OFG IN = { };
+    OFG OUTFor = genFor;
+    OFG OUTBack = genBack;
   
-  solve (IN, OUT) {
-    IN = { <n,\o> | n <- carrier(g), p <- (back ? pred(n) : succ(n)), \o <- OUT[p] };
-    OUT = gen + (IN - kill);
-  }
+    invertedOfg = { <to,from> | <from, to> <- ofg};
+    set[loc] pred(loc n) = invertedOfg[n];
+    set[loc] succ(loc n) = ofg[n];
+      
+    solve (IN, OUTFor) {
+        IN = { <n,\o> | n <- carrier(ofg), x <- (pred(n)), \o <- OUTFor[x] };
+        OUTFor = genFor + IN;
+    }
+    solve (IN, OUTBack) {
+        IN = { <n,\o> | n <- carrier(ofg), x <- (succ(n)), \o <- OUTBack[x] };
+        OUTBack = genBack + IN;
+    }
   
-  return OUT;
+    return OUTFor + OUTBack;           
 }
 
 //Get all classes from M3
@@ -125,11 +170,11 @@ public set[loc] getClasses(M3 m) {
 
 //Get all edges of OFG
 private list[Edge] makeOfgEdges() {
-    return [edge("<to>", "<from>") | <from,to> <- getOfg() ];
+    return [edge("<to>", "<from>") | <from, to> <- getOfg() ];
 }
 //Get all edges of propagated OFG
 private list[Edge] makePropagatedOfgEdges() {
-    return [edge("<to>", "<from>") | <from,to> <- getPropagatedOfg() ];
+    return [edge("<to>", "<from>") | <from, to> <- getPropagatedOfg() ];
 }
 //Store all OFG nodes
 private void makeOfgNodes() {
@@ -145,7 +190,16 @@ private void makePropagatedOfgNodes() {
         propagatedOfgNodes += e.to;
     }
 }
-
+//Store all m3 type dependency edges
+private list[Edge] makeTypeDependencyEdges(M3 m) {
+    list[Edge] dependency = [edge("<to>", "<from>") | <from, to> <- m@typeDependency ];
+    for (e <- dependency) {
+        if (! contains(e.to, "field")) {
+            dependency -= e;
+        }
+    }
+    return dependency;
+}
 
 //Get private variables
 public M3 getM3() {
@@ -169,8 +223,14 @@ public list[Edge] getPropagatedOfgEdges() {
 public list[str] getOfgNodes() {
     return toList(ofgNodes);
 }
-public list[str] getOfgNodes() {
+public list[str] getPropagatedOfgNodes() {
     return toList(propagatedOfgNodes);
+}
+public list[Edge] getTypeDependencies() {
+    return typeDependencies;
+}
+public list[Edge] getEdgeToModify() {
+    return edgeToModify;
 }
 
 public void write() {
@@ -202,55 +262,6 @@ public str M3ToString(M3 m) {
 public str OfgToString(OFG ofg) {
     writeFile(|tmp:///ofg.txt|, ofg);
     return readFile(|tmp:///ofg.txt|);
-}
-
-//Check ofg edges, such that field flows to Classes
-//Indicates that data flows to/from that class
-public void checkOfg(list[Edge] edges) {
-    for (e <- edges) {
-        if (contains(e.from, "class") && contains(e.to, "field")) {
-            println(e);
-        }
-    }
-}
-
-
-//Propagation algorithm
-//applies the propagation algorithm either forward or backwards, to obtain hidden relations.
-private OFG propagate(OFG ofg) {
-  rel[loc, loc] genFor;
-  rel[loc, loc] genBack;
-  genFor = { <constr + "this", class> | newAssign(_, class, constr, _) <- getProgram().statements, constructor(constr, _) <- getProgram().decls };
-  genBack = { <x, caller> | assign(y, caller, x) <- getProgram().statements, caller != emptyId}
-        + { <m + "return", caller> | call(caller, _, _, m, _) <- getProgram().statements, caller != emptyId};
-  //if (!back) {
-  //  gen = { <constr + "this", class> | newAssign(_, class, constr, _) <- prog.statements, constructor(constr, _) <- prog.decls };
-  //  //gen = genFor;
-  //}
-  //else {
-  //  //gen = { <s, ca> | assign(t, ca, s) <- prog.statements, ca != emptyId }
-  //  //  + { <m + "return", ca> | call(t, ca, _, m, _) <- prog.statements, ca != emptyId };
-  //  gen = genBack;
-  //}
-    
-  OFG IN = { };
-  OFG OUTFor = genFor;
-  OFG OUTBack = genBack;
-  
-  invertedOfg = { <to,from> | <from, to> <- ofg};
-  set[loc] pred(loc n) = invertedOfg[n];
-  set[loc] succ(loc n) = ofg[n];
-      
-  solve (IN, OUTFor) {
-    IN = { <n,\o> | n <- carrier(ofg), x <- (pred(n)), \o <- OUTFor[x] };
-    OUTFor = genFor + IN;
-  }
-  solve (IN, OUTBack) {
-    IN = { <n,\o> | n <- carrier(ofg), x <- (succ(n)), \o <- OUTBack[x] };
-    OUTBack = genBack + IN;
-  }
-  
-  return OUTFor + OUTBack;           
 }
 
 
