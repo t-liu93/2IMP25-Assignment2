@@ -14,12 +14,13 @@ import Relation;
 import vis::Figure;
 import vis::Render;
 
-
+alias OFG = rel[loc from, loc to]; //OFG alias
 //Declare variables
 private M3 projectM3;
 private Program projectProgram;
 private OFG ofg;
-alias OFG = rel[loc from, loc to]; //OFG alias
+private list[Edge] ofgEdges;
+
 //Since classes(m) cannot get basic classes
 //Add a set to store all Java's basic classes
 set[loc] basicClasses = {
@@ -38,7 +39,8 @@ set[loc] basicClasses = {
 public void getAdvises() {
 //TODO: Add sub methods
 	createM3AndFlowProgram(|project://eLib|); //TODO: make it more generic
-	buildGraph(getProgram());
+	buildGraph(getProgram()); //BuildOFG
+	ofgEdges = makeOfgEdges();
 	//println(declarations(getM3()));
 	//for(cl <- classes(getM3())) {
 	//set[loc] innerClassSet = { e | e <- m@containment[cl], isClass(e)};
@@ -96,6 +98,12 @@ public set[loc] getClasses(M3 m) {
     return allClasses;
 }
 
+//Get all edges of OFG
+private list[Edge] makeOfgEdges() {
+    return [edge("<to>", "<from>") | <from,to> <- getOfg() ];
+}
+
+
 //Get private variables
 public M3 getM3() {
     return projectM3;
@@ -105,6 +113,9 @@ public Program getProgram() {
 }
 public OFG getOfg() {
     return ofg;
+}
+public list[Edge] getOfgEdges() {
+    return ofgEdges;
 }
 
 public void write() {
