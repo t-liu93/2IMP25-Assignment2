@@ -20,8 +20,12 @@ alias OFG = rel[loc from, loc to]; //OFG alias
 private M3 projectM3;
 private Program projectProgram;
 private OFG ofg;
+private OFG propagatedOfg;
 private list[Edge] ofgEdges;
+private list[Edge] propagatedOfgEdges;
 private set[str] ofgNodes = {};
+private set[str] propagatedOfgNodes = {};
+private list[Edge] interfaceEdges;
 
 //Since classes(m) cannot get basic classes
 //Add a set to store all Java's basic classes
@@ -54,9 +58,12 @@ set[str] containerClasses =  {
 public void getAdvises() {
 //TODO: Add sub methods
 	createM3AndFlowProgram(|project://eLib|); //TODO: make it more generic
-	buildGraph(getProgram()); //BuildOFG
+	//buildGraph(getProgram()); //BuildOFG
+	propagatedOfg = propagate(getOfg());
 	ofgEdges = makeOfgEdges();
+	propagatedOfgEdges = makePropagatedOfgEdges();
 	makeOfgNodes();
+	makePropagatedOfgNodes();
 	//println(declarations(getM3()));
 	//for(cl <- classes(getM3())) {
 	//set[loc] innerClassSet = { e | e <- m@containment[cl], isClass(e)};
@@ -70,6 +77,7 @@ public void createM3AndFlowProgram(loc projectLoc) {
     projectM3 = createM3FromEclipseProject(projectLoc);
     projectProgram = createOFG(projectLoc);
     buildGraph(getProgram());
+    //initialEdgesOFG(getProgram());
 }
 
 //Initial flow graph 
@@ -81,8 +89,9 @@ public void buildGraph(Program p) {
     ofg
     = { <as[i], fps[i]> | newAssign(x, cl, c, as) <- p.statements, constructor(c, fps) <- p.decls, i <- index(as) } 
     + { <cl + "this", x> | newAssign(x, cl, _, _) <- p.statements } 
+    + { <cs + "this", x> | newAssign(x, _, cs, _) <- p.statements }
     + { <y, x> | assign(x, _, y) <- p.statements} 
-    + { <as[i], fps[i]> | call(x, _, y, m, as) <- p.statements, method(m, fps) <- p.decls, i <- index(as) } 
+    + { <as[i], fps[i]> | call(_, _, _, m, as) <- p.statements, method(m, fps) <- p.decls, i <- index(as) } 
     + { <y, m + "this"> | call(_, _, y, m, _) <- p.statements } 
     + { <m + "return", x> | call(x, _, _, m, _) <- p.statements, x != emptyId}
     ;
@@ -118,11 +127,22 @@ public set[loc] getClasses(M3 m) {
 private list[Edge] makeOfgEdges() {
     return [edge("<to>", "<from>") | <from,to> <- getOfg() ];
 }
-//Store all ofg nodes
+//Get all edges of propagated OFG
+private list[Edge] makePropagatedOfgEdges() {
+    return [edge("<to>", "<from>") | <from,to> <- getPropagatedOfg() ];
+}
+//Store all OFG nodes
 private void makeOfgNodes() {
     for (e <- ofgEdges) {
         ofgNodes += e.from;
         ofgNodes += e.to;
+    }
+}
+//Store all propagated OFG nodes
+private void makePropagatedOfgNodes() {
+    for (e <- propagatedOfgEdges) {
+        propagatedOfgNodes += e.from;
+        propagatedOfgNodes += e.to;
     }
 }
 
@@ -137,11 +157,20 @@ public Program getProgram() {
 public OFG getOfg() {
     return ofg;
 }
+public OFG getPropagatedOfg() {
+    return propagatedOfg;
+}
 public list[Edge] getOfgEdges() {
     return ofgEdges;
 }
+public list[Edge] getPropagatedOfgEdges() {
+    return propagatedOfgEdges;
+}
 public list[str] getOfgNodes() {
     return toList(ofgNodes);
+}
+public list[str] getOfgNodes() {
+    return toList(propagatedOfgNodes);
 }
 
 public void write() {
@@ -179,10 +208,49 @@ public str OfgToString(OFG ofg) {
 //Indicates that data flows to/from that class
 public void checkOfg(list[Edge] edges) {
     for (e <- edges) {
-        if (contains(e.from, "java+field") && contains(e.to, "java+method")) {
+        if (contains(e.from, "class") && contains(e.to, "field")) {
             println(e);
         }
     }
+}
+
+
+//Propagation algorithm
+//applies the propagation algorithm either forward or backwards, to obtain hidden relations.
+private OFG propagate(OFG ofg) {
+  rel[loc, loc] genFor;
+  rel[loc, loc] genBack;
+  genFor = { <constr + "this", class> | newAssign(_, class, constr, _) <- getProgram().statements, constructor(constr, _) <- getProgram().decls };
+  genBack = { <x, caller> | assign(y, caller, x) <- getProgram().statements, caller != emptyId}
+        + { <m + "return", caller> | call(caller, _, _, m, _) <- getProgram().statements, caller != emptyId};
+  //if (!back) {
+  //  gen = { <constr + "this", class> | newAssign(_, class, constr, _) <- prog.statements, constructor(constr, _) <- prog.decls };
+  //  //gen = genFor;
+  //}
+  //else {
+  //  //gen = { <s, ca> | assign(t, ca, s) <- prog.statements, ca != emptyId }
+  //  //  + { <m + "return", ca> | call(t, ca, _, m, _) <- prog.statements, ca != emptyId };
+  //  gen = genBack;
+  //}
+    
+  OFG IN = { };
+  OFG OUTFor = genFor;
+  OFG OUTBack = genBack;
+  
+  invertedOfg = { <to,from> | <from, to> <- ofg};
+  set[loc] pred(loc n) = invertedOfg[n];
+  set[loc] succ(loc n) = ofg[n];
+      
+  solve (IN, OUTFor) {
+    IN = { <n,\o> | n <- carrier(ofg), x <- (pred(n)), \o <- OUTFor[x] };
+    OUTFor = genFor + IN;
+  }
+  solve (IN, OUTBack) {
+    IN = { <n,\o> | n <- carrier(ofg), x <- (succ(n)), \o <- OUTBack[x] };
+    OUTBack = genBack + IN;
+  }
+  
+  return OUTFor + OUTBack;           
 }
 
 
