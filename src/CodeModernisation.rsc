@@ -30,7 +30,7 @@ private list[Edge] typeDependencies = []; //
 private list[Edge] edgeToModify = []; //
 private list[Edge] classDependency = [];
 private list[Edge] declarations = [];
-private lrel[str field, str class, str interface, int counter] fieldRelation = [];
+private lrel[str field, set[str] class, str interface, int counter] fieldRelation = [];
 
 //Since classes(m) cannot get basic classes
 //Add a set to store all Java's basic classes
@@ -62,23 +62,23 @@ set[str] containerClasses =  {
 //It invokes all other stuffs
 public void getAdvises() {
     projectLocation = |project://eLib|; //TODO: remove this and add parameter to the method
-	createM3AndFlowProgram(projectLocation); //Create OFG
-	getEdgesAndNodes(); //Get all edges and nodes we need
-	checkOfgInflow(getPropagatedOfgEdges()); 
-	checkEdgeToModify(getEdgeToModify());
-	//println(declarations(getM3()));
-	//for(cl <- classes(getM3())) {
-	//set[loc] innerClassSet = { e | e <- m@containment[cl], isClass(e)};
-	//println(innerClassSet);
-	//}
-	//println(getEdgeToModify());
-	//println(interfaceEdges);
-	//buildRelation(edgeToModify, interfaceEdges);
-	//println(fieldRelation);
-	//println(declarations);
-	//for (e <- getEdgeToModify()) {
-	//   println(stringToField(e.from));
-	//}
+    createM3AndFlowProgram(projectLocation); //Create OFG
+    getEdgesAndNodes(); //Get all edges and nodes we need
+    checkOfgInflow(getPropagatedOfgEdges()); 
+    checkEdgeToModify(getEdgeToModify());
+    //println(declarations(getM3()));
+    //for(cl <- classes(getM3())) {
+    //set[loc] innerClassSet = { e | e <- m@containment[cl], isClass(e)};
+    //println(innerClassSet);
+    //}
+    //println(getEdgeToModify());
+    //println(interfaceEdges);
+    buildRelation(edgeToModify, interfaceEdges);
+    println(fieldRelation);
+    //println(declarations);
+    //for (e <- getEdgeToModify()) {
+    //   println(stringToField(e.from));
+    //}
 }
 
 //Create M3 and a flow program
@@ -273,24 +273,42 @@ private str edgeToString(str edge) {
 //The related class, i.e. value type
 //The used interface and counter
 private void buildRelation(list[Edge] edgeToModify, list[Edge] interfaceEdges) {
+    lrel[str field, str class, str interface, int counter] tempRel = [];
     for (e <- edgeToModify) {
-        str field = edgeToString(e.to);
-        str class = edgeToString(e.from);
-        int counter = 0;
+        //str field = edgeToString(e.to);
+        str field = e.to;
+        //str class = edgeToString(e.from);
+        //str class = e.from;
+        int counter = 1;
         str interface = "";
         for (i <- interfaceEdges) {
             if (e.to == i.to) {
                 interface = edgeToString(i.from);
             }
         }
-        for (r <- fieldRelation) {
+        for (r <- tempRel) {
             if (r.field == field) {
                 counter = r.counter + 1;
             }
         }
-        fieldRelation += <field, class, interface, counter>;
+        tempRel += <field, class, interface, counter>;
+    }
+    for (r <- tempRel) {
+        set[str] class = {};
+        if (r.counter == 1) {
+            int counter = 0;
+            for (t <- tempRel) {
+                if (r.field == t.field) {
+                    class += t.class;
+                    counter += 1;
+                }
+            }
+            fieldRelation += <r.field, class, r.interface, counter>;
+        }
     }
 }
+
+//Generate suggestions
 
 //Get private variables
 public M3 getM3() {
@@ -325,9 +343,9 @@ public list[Edge] getEdgeToModify() {
 }
 
 public void write() {
-	writeFile(|file:///D:/ofg.txt|, getOfg());
-	writeFile(|file:///D:/m3.txt|, getM3());
-	writeFile(|file:///D:/program.txt|, getProgram());
+    writeFile(|file:///D:/ofg.txt|, getOfg());
+    writeFile(|file:///D:/m3.txt|, getM3());
+    writeFile(|file:///D:/program.txt|, getProgram());
 }
 
 //Draw extends class diagram
