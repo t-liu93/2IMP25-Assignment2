@@ -29,6 +29,7 @@ private list[Edge] interfaceEdges = []; //Stores
 private list[Edge] typeDependencies = []; //
 private list[Edge] edgeToModify = []; //
 private list[Edge] classDependency = [];
+private list[Edge] declarations = [];
 private lrel[str field, str class, str interface, int counter] fieldRelation = [];
 
 //Since classes(m) cannot get basic classes
@@ -70,10 +71,11 @@ public void getAdvises() {
 	//set[loc] innerClassSet = { e | e <- m@containment[cl], isClass(e)};
 	//println(innerClassSet);
 	//}
-	println(getEdgeToModify());
-	println(interfaceEdges);
-	buildRelation(edgeToModify, interfaceEdges);
-	println(fieldRelation);
+	//println(getEdgeToModify());
+	//println(interfaceEdges);
+	//buildRelation(edgeToModify, interfaceEdges);
+	//println(fieldRelation);
+	//println(declarations);
 	//for (e <- getEdgeToModify()) {
 	//   println(stringToField(e.from));
 	//}
@@ -97,6 +99,7 @@ private void getEdgesAndNodes() {
     makePropagatedOfgNodes();
     typeDependencies = makeTypeDependencyEdges(getM3());
     interfaceEdges = makeDependencyWithInterface(getTypeDependencies());
+    declarations = makeDeclarations(getM3());
 }
 
 //Check ofg edges, such that field flows to Classes
@@ -217,6 +220,28 @@ private list[Edge] makeDependencyWithInterface(list[Edge] typeDependency) {
         }
     }
     return typeDependency;
+}
+//Store all m3 declarations
+//Only with java+field
+private list[Edge] makeDeclarations(M3 m) {
+    list[Edge] declarations = [edge("<to>", "<from>") | <from, to> <- m@declarations ];
+    list[Edge] declarationsOutput = [];
+    for (d <- declarations) {
+        if (! contains(d.to, "field")) {
+            declarations -= d;
+        }
+    }
+    for (d <- declarations) {
+        for (e <- edgeToModify) {
+            //println(e);
+            if (e.to == d.to) {
+                //println(e);
+                declarationsOutput += d;
+                break;
+            }
+        }
+    }
+    return declarationsOutput;
 }
 
 //Change the edge string to a e.g. class, interface, field name for correction
