@@ -17,17 +17,19 @@ import String;
 
 alias OFG = rel[loc from, loc to]; //OFG alias
 //Declare variables
-private M3 projectM3;
-private Program projectProgram;
-private OFG ofg;
-private OFG propagatedOfg;
-private list[Edge] ofgEdges = [];
-private list[Edge] propagatedOfgEdges = [];
-private set[str] ofgNodes = {};
-private set[str] propagatedOfgNodes = {};
-private list[Edge] interfaceEdges = [];
-private list[Edge] typeDependencies = [];
-private list[Edge] edgeToModify = [];
+private M3 projectM3; //M3 from project
+private Program projectProgram; //Program from project
+private OFG ofg; //Project OFG
+private OFG propagatedOfg; //Project OFG, propagated using propagation algorithm
+private list[Edge] ofgEdges = []; //Stores the edges of original OFG
+private list[Edge] propagatedOfgEdges = []; //Stores the edges of propagated OFG
+private set[str] ofgNodes = {}; //Stores the nodes of OFG
+private set[str] propagatedOfgNodes = {}; //Stores the nodes of propagated OFG
+private list[Edge] interfaceEdges = []; //Stores 
+private list[Edge] typeDependencies = []; //
+private list[Edge] edgeToModify = []; //
+private list[Edge] classDependency = [];
+private lrel[str field, str class, str interface, int counter] fieldRelation = [];
 
 //Since classes(m) cannot get basic classes
 //Add a set to store all Java's basic classes
@@ -58,16 +60,22 @@ set[str] containerClasses =  {
 //A main entry to invoke all procedure
 //It invokes all other stuffs
 public void getAdvises() {
-//TODO: Add sub methods
-    projectLocation = |project://eLib|;
+    projectLocation = |project://eLib|; //TODO: remove this and add parameter to the method
 	createM3AndFlowProgram(projectLocation); //Create OFG
 	getEdgesAndNodes(); //Get all edges and nodes we need
-	checkOfgInflow(getPropagatedOfgEdges());
+	checkOfgInflow(getPropagatedOfgEdges()); 
 	checkEdgeToModify(getEdgeToModify());
 	//println(declarations(getM3()));
 	//for(cl <- classes(getM3())) {
 	//set[loc] innerClassSet = { e | e <- m@containment[cl], isClass(e)};
 	//println(innerClassSet);
+	//}
+	println(getEdgeToModify());
+	println(interfaceEdges);
+	buildRelation(edgeToModify, interfaceEdges);
+	println(fieldRelation);
+	//for (e <- getEdgeToModify()) {
+	//   println(stringToField(e.from));
 	//}
 }
 
@@ -88,6 +96,7 @@ private void getEdgesAndNodes() {
     makeOfgNodes();
     makePropagatedOfgNodes();
     typeDependencies = makeTypeDependencyEdges(getM3());
+    interfaceEdges = makeDependencyWithInterface(getTypeDependencies());
 }
 
 //Check ofg edges, such that field flows to Classes
@@ -199,6 +208,63 @@ private list[Edge] makeTypeDependencyEdges(M3 m) {
         }
     }
     return dependency;
+}
+//Store all m3 type dependency with interfaces
+private list[Edge] makeDependencyWithInterface(list[Edge] typeDependency) {
+    for (e <- typeDependency) {
+        if (! contains(e.from, "interface")) {
+            typeDependency -= e;
+        }
+    }
+    return typeDependency;
+}
+
+//Change the edge string to a e.g. class, interface, field name for correction
+private str edgeToString(str edge) {
+    int length = size(edge);
+    int startIndex;
+    int endIndex;
+    str newString = "";
+    for (int i <- [length - 1..0]) {
+        if (! (charAt(edge, i) == 124)) {
+            endIndex = i + 1;
+            break;
+        }
+    }
+    for (int i <- [length - 1..0]) {
+        if (charAt(edge, i) == 47) {
+            startIndex = i + 1;
+            break;
+        }
+    }
+    for (int j <- [startIndex..endIndex]) {
+        newString += stringChar(charAt(edge, j));
+    }
+    return newString;
+}
+
+//Build relation of correction
+//The relation includes the field that need to be modified, 
+//The related class, i.e. value type
+//The used interface and counter
+private void buildRelation(list[Edge] edgeToModify, list[Edge] interfaceEdges) {
+    for (e <- edgeToModify) {
+        str field = edgeToString(e.to);
+        str class = edgeToString(e.from);
+        int counter = 0;
+        str interface = "";
+        for (i <- interfaceEdges) {
+            if (e.to == i.to) {
+                interface = edgeToString(i.from);
+            }
+        }
+        for (r <- fieldRelation) {
+            if (r.field == field) {
+                counter = r.counter + 1;
+            }
+        }
+        fieldRelation += <field, class, interface, counter>;
+    }
 }
 
 //Get private variables
