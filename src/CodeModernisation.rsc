@@ -60,7 +60,7 @@ set[str] containerClasses =  {
 
 //A main entry to invoke all procedure
 //It invokes all other stuffs
-public void getAdvises() {
+public void getAdvices() {
     projectLocation = |project://eLib|; //TODO: remove this and add parameter to the method
     createM3AndFlowProgram(projectLocation); //Create OFG
     getEdgesAndNodes(); //Get all edges and nodes we need
@@ -277,7 +277,7 @@ private void buildRelation(list[Edge] edgeToModify, list[Edge] interfaceEdges) {
     for (e <- edgeToModify) {
         //str field = edgeToString(e.to);
         str field = e.to;
-        //str class = edgeToString(e.from);
+        str class = edgeToString(e.from);
         //str class = e.from;
         int counter = 1;
         str interface = "";
