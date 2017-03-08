@@ -32,19 +32,8 @@ private list[Edge] classDependency = [];
 private list[Edge] declarations = [];
 private lrel[str field, set[str] class, str interface, int counter] fieldRelation = [];
 private lrel[str superClass, set[str] subClass] extendClasses = [];
+private lrel[str field, str class, str interface] fieldRelationWithSuperClass = [];
 
-//Since classes(m) cannot get basic classes
-//Add a set to store all Java's basic classes
-set[loc] basicClasses = {
-    |java+class:///java/lang/Byte|, 
-    |java+class:///java/lang/Character|, 
-    |java+class:///java/lang/Short|, 
-    |java+class:///java/lang/Integer|, 
-    |java+class:///java/lang/Long|, 
-    |java+class:///java/lang/Float|, 
-    |java+class:///java/lang/Double|, 
-    |java+class:///java/lang/String|
-};
 //Container Classes
 //These classes variables should be modified 
 set[str] containerClasses =  {
@@ -65,8 +54,11 @@ public void getAdvices() {
     projectLocation = |project://eLib|; //TODO: remove this and add parameter to the method
     createM3AndFlowProgram(projectLocation); //Create OFG
     getEdgesAndNodes(); //Get all edges and nodes we need
+    getExtendClasses(getM3());
+    println(extendClasses);
     checkOfgInflow(getPropagatedOfgEdges()); 
     checkEdgeToModify(getEdgeToModify());
+    declarations = makeDeclarations(getM3());
     //println(declarations(getM3()));
     //for(cl <- classes(getM3())) {
     //set[loc] innerClassSet = { e | e <- m@containment[cl], isClass(e)};
@@ -75,7 +67,8 @@ public void getAdvices() {
     //println(getEdgeToModify());
     //println(interfaceEdges);
     buildRelation(edgeToModify, interfaceEdges);
-    println(fieldRelation);
+    //println(fieldRelation);
+    getSuggestions();
     //println(declarations);
     //for (e <- getEdgeToModify()) {
     //   println(stringToField(e.from));
@@ -100,7 +93,6 @@ private void getEdgesAndNodes() {
     makePropagatedOfgNodes();
     typeDependencies = makeTypeDependencyEdges(getM3());
     interfaceEdges = makeDependencyWithInterface(getTypeDependencies());
-    declarations = makeDeclarations(getM3());
 }
 
 //Check ofg edges, such that field flows to Classes
@@ -312,12 +304,110 @@ private void buildRelation(list[Edge] edgeToModify, list[Edge] interfaceEdges) {
 //Generate suggestions
 private void getSuggestions() {
     for (f <- fieldRelation) {
-        for (d <- declarations) {
-            
+        switch(f.interface) {
+            case "Map": 
+                for (d <- declarations) {
+                    if (f.field == d.to) {
+                        print("Code at" + d.from + " should be changed to: ");
+                        print(f.interface);
+                        print("\<");
+                        print("Integer, ");
+                        print(getSuperClass(f.class));
+                        //print(f.class);
+                        print("\> ");
+                        println(edgeToString(f.field));                
+                    }
+                }
+            case "Collection":
+                for (d <- declarations) {
+                    if (f.field == d.to) {
+                        print("Code at" + d.from + " should be changed to: ");
+                        print(f.interface);
+                        print("\<");
+                        print(getSuperClass(f.class));
+                        print("\> ");
+                        println(edgeToString(f.field));                
+                    }
+                }
+        }
+    }
 }
 
 //Constraint solver
-private str getSuperClass() {
+private void getExtendClasses(M3 m) {
+    list[Edge] extends = [edge("<to>", "<from>") | <from, to> <- m@extends ];
+    //From is the super class
+    //for (e <-extends) {
+    //    println(e.to);
+    //}
+    for (e <- extends) {
+        if (! containsClass(e.from)) {
+            extendClasses += <e.from, {e.to}>;
+        } else {
+            for (ec <- extendClasses) {
+                if (e.from == ec.superClass) {
+                    //e.to += ec.subClass;
+                    //ec.subClass += e.to;
+                    set[str] tmp = ec.subClass;
+                    extendClasses -= <e.from, tmp>;
+                    tmp += e.to;
+                    extendClasses += <e.from, tmp>;
+                }
+            }
+        }
+        //e.from += extendClasses.superClass;
+        //e.to += extendClasses.subClass;
+        
+    }        
+}
+
+//Get super class
+//Now only support that there are inheritance between two classes
+private str getSuperClass(set[str] classSet) {
+    if (size(classSet) == 1) {
+        return oneElementSetToString(classSet);
+    } else {
+        for (c <- classSet) {
+            for (e <- extendClasses) {
+                if (c == edgeToString(e.superClass)) {
+                    return edgeToString(e.superClass);
+                } else {
+                    for (s <- e.subClass) {
+                        if (c == edgeToString(s)) {
+                            return edgeToString(e.superClass);
+                        }
+                    }
+                }
+            }
+        }
+        return "Object";
+    }
+}
+private bool containsClass(str class) {
+    for (e <- extendClasses) {
+        if (e.superClass == class) {
+            return true;
+        }
+    }
+    return false;
+}
+private str oneElementSetToString(set[str] input) {
+    int startIndex = 0;
+    int endIndex = 0;
+    str newString = "";
+    str tmp = toString(input);
+    for (i <- [0..size(tmp)]) {
+        if ((charAt(tmp, i) == 123) && (charAt(tmp, i + 1) == 34)) {
+            startIndex = i + 2;
+        }
+        if ((charAt(tmp, i) == 34) && (charAt(tmp, i + 1) == 125)) {
+            endIndex = i;
+        }
+    }
+    for (int j <- [startIndex..endIndex]) {
+        newString += stringChar(charAt(tmp, j));
+    }
+    return newString;
 }
 
 
@@ -383,10 +473,3 @@ public str OfgToString(OFG ofg) {
     writeFile(|tmp:///ofg.txt|, ofg);
     return readFile(|tmp:///ofg.txt|);
 }
-
-
-
-
-    
-
-
