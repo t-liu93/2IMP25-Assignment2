@@ -31,6 +31,7 @@ private list[Edge] edgeToModify = []; //
 private list[Edge] classDependency = [];
 private list[Edge] declarations = [];
 private lrel[str field, set[str] class, str interface, int counter] fieldRelation = [];
+private lrel[str superClass, set[str] subClass] extendClasses = [];
 
 //Since classes(m) cannot get basic classes
 //Add a set to store all Java's basic classes
@@ -309,6 +310,16 @@ private void buildRelation(list[Edge] edgeToModify, list[Edge] interfaceEdges) {
 }
 
 //Generate suggestions
+private void getSuggestions() {
+    for (f <- fieldRelation) {
+        for (d <- declarations) {
+            
+}
+
+//Constraint solver
+private str getSuperClass() {
+}
+
 
 //Get private variables
 public M3 getM3() {
